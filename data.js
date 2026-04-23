@@ -26,7 +26,62 @@ const ITEMS = {
   black_cadillac:    { name: 'Black Cadillac',       slot: 'vehicle', atk: 20,  def: 18,  cost: 60000 },
   armored_limo:      { name: 'Armored Limo',         slot: 'vehicle', atk: 35,  def: 50,  cost: 320000 },
   bulletproof_rolls: { name: 'Bulletproof Rolls',    slot: 'vehicle', atk: 70,  def: 110, cost: 1500000 },
+
+  // --- components (slot:'component', not worn, only used in recipes) ---
+  scrap_metal:       { name: 'Scrap Metal',          slot: 'component', atk: 0, def: 0, cost: 0 },
+  gunpowder:         { name: 'Gunpowder',            slot: 'component', atk: 0, def: 0, cost: 0 },
+  engine_block:      { name: 'Engine Block',         slot: 'component', atk: 0, def: 0, cost: 0 },
+  armor_plate:       { name: 'Steel Plate',          slot: 'component', atk: 0, def: 0, cost: 0 },
+  blueprint_stiletto: { name: 'Blueprint: Stiletto', slot: 'component', atk: 0, def: 0, cost: 0 },
+
+  // --- craftable upgrades (made from components + base items) ---
+  modded_switchblade: { name: 'Modded Switchblade',  slot: 'weapon',  atk: 9,   def: 3,   cost: 0 },
+  reinforced_vest:   { name: 'Reinforced Vest',      slot: 'armor',   atk: 2,   def: 15,  cost: 0 },
+  souped_up_sedan:   { name: 'Souped-Up Sedan',      slot: 'vehicle', atk: 6,   def: 5,   cost: 0 },
+  custom_tommy:      { name: 'Custom Tommy Gun',     slot: 'weapon',  atk: 38,  def: 10,  cost: 0 },
 };
+
+// ---------- RECIPES ----------
+// Each recipe consumes `inputs` (item_id → qty) and produces `output` (item_id, qty).
+// `hidden`: true means it's only discoverable via community hint (not shown in the recipe list).
+const RECIPES = [
+  {
+    id: 'mod_switchblade',
+    name: 'Modded Switchblade',
+    inputs: { switchblade: 1, scrap_metal: 3, gunpowder: 1 },
+    output: { item: 'modded_switchblade', qty: 1 },
+    hidden: false,
+  },
+  {
+    id: 'reinforced_vest',
+    name: 'Reinforced Vest',
+    inputs: { bulletproof_vest: 1, armor_plate: 4 },
+    output: { item: 'reinforced_vest', qty: 1 },
+    hidden: false,
+  },
+  {
+    id: 'souped_sedan',
+    name: 'Souped-Up Sedan',
+    inputs: { beater_sedan: 1, engine_block: 2, scrap_metal: 2 },
+    output: { item: 'souped_up_sedan', qty: 1 },
+    hidden: false,
+  },
+  {
+    id: 'custom_tommy',
+    name: 'Custom Tommy Gun',
+    inputs: { tommy_gun: 1, gunpowder: 4, scrap_metal: 5, armor_plate: 2 },
+    output: { item: 'custom_tommy', qty: 1 },
+    hidden: false,
+  },
+  // Hidden blueprint — no UI hint, must be discovered
+  {
+    id: 'stiletto_assassin',
+    name: 'Hidden Blueprint',
+    inputs: { blueprint_stiletto: 1, modded_switchblade: 2, gunpowder: 10 },
+    output: { item: 'gold_plated_45', qty: 1 },
+    hidden: true,
+  },
+];
 
 // ---------- JOBS ----------
 // tier: progression gate. Higher tier requires mastery of the previous tier.
@@ -34,14 +89,14 @@ const ITEMS = {
 // unlock_level: minimum player level.
 const JOBS = [
   // Tier 1 - street
-  { id: 'mug_tourist',     name: 'Mug a Tourist',         tier: 1, unlock_level: 1,  energy: 2, cash: [25, 80],     xp: 3,  loot: { chance: 0.1, item: 'brass_knuckles' } },
-  { id: 'pickpocket',      name: 'Pickpocket the Market', tier: 1, unlock_level: 1,  energy: 3, cash: [60, 140],    xp: 4,  loot: null },
-  { id: 'shakedown',       name: 'Shake Down a Shopkeeper', tier: 1, unlock_level: 2, energy: 4, cash: [120, 250],   xp: 6,  loot: { chance: 0.08, item: 'switchblade' } },
+  { id: 'mug_tourist',     name: 'Mug a Tourist',         tier: 1, unlock_level: 1,  energy: 2, cash: [25, 80],     xp: 3,  loot: { chance: 0.1,  item: 'brass_knuckles' }, salvage: { chance: 0.15, item: 'scrap_metal' } },
+  { id: 'pickpocket',      name: 'Pickpocket the Market', tier: 1, unlock_level: 1,  energy: 3, cash: [60, 140],    xp: 4,  loot: null,                                     salvage: { chance: 0.15, item: 'scrap_metal' } },
+  { id: 'shakedown',       name: 'Shake Down a Shopkeeper', tier: 1, unlock_level: 2, energy: 4, cash: [120, 250],   xp: 6,  loot: { chance: 0.08, item: 'switchblade' },  salvage: { chance: 0.1,  item: 'gunpowder' } },
 
   // Tier 2 - neighborhood
-  { id: 'numbers_racket',  name: 'Run a Numbers Racket',  tier: 2, unlock_level: 4,  energy: 6,  cash: [400, 750],    xp: 11, loot: { chance: 0.1, item: 'leather_jacket' } },
-  { id: 'rig_horse_race',  name: 'Rig a Horse Race',      tier: 2, unlock_level: 6,  energy: 8,  cash: [800, 1500],   xp: 16, loot: { chance: 0.07, item: 'beater_sedan' } },
-  { id: 'jack_truck',      name: 'Jack a Delivery Truck', tier: 2, unlock_level: 8,  energy: 10, cash: [1600, 3200],  xp: 22, loot: { chance: 0.1, item: 'saturday_special' } },
+  { id: 'numbers_racket',  name: 'Run a Numbers Racket',  tier: 2, unlock_level: 4,  energy: 6,  cash: [400, 750],    xp: 11, loot: { chance: 0.1,  item: 'leather_jacket' }, salvage: { chance: 0.2, item: 'armor_plate' } },
+  { id: 'rig_horse_race',  name: 'Rig a Horse Race',      tier: 2, unlock_level: 6,  energy: 8,  cash: [800, 1500],   xp: 16, loot: { chance: 0.07, item: 'beater_sedan' },   salvage: { chance: 0.2, item: 'engine_block' } },
+  { id: 'jack_truck',      name: 'Jack a Delivery Truck', tier: 2, unlock_level: 8,  energy: 10, cash: [1600, 3200],  xp: 22, loot: { chance: 0.1,  item: 'saturday_special' }, salvage: { chance: 0.2, item: 'gunpowder' } },
 
   // Tier 3 - organized
   { id: 'protection_run',  name: 'Run a Protection Racket', tier: 3, unlock_level: 12, energy: 14, cash: [5000, 9000],  xp: 38, loot: { chance: 0.1, item: 'bulletproof_vest' } },
@@ -133,6 +188,6 @@ function xpForLevel(level) {
 }
 
 module.exports = {
-  ITEMS, JOBS, PROPERTIES, NPC_NAMES, REGEN, SKILL_COST, SKILL_POINTS_PER_LEVEL,
+  ITEMS, JOBS, PROPERTIES, RECIPES, NPC_NAMES, REGEN, SKILL_COST, SKILL_POINTS_PER_LEVEL,
   INCOME_CAP_HOURS, xpForLevel, MOB, HIRED_GUN_NAMES,
 };

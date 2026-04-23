@@ -265,6 +265,11 @@ function doJob(c, jobId) {
     lootItem = job.loot.item;
     addItem(c.id, lootItem, 1);
   }
+  let salvageItem = null;
+  if (job.salvage && Math.random() < job.salvage.chance) {
+    salvageItem = job.salvage.item;
+    addItem(c.id, salvageItem, 1);
+  }
 
   // mastery
   db.prepare(`INSERT INTO job_mastery (character_id, job_id, completions) VALUES (?, ?, 1)
@@ -279,9 +284,10 @@ function doJob(c, jobId) {
   const leveledUp = applyLevelUps(c);
   let msg = `${job.name}: +$${cash.toLocaleString()} / +${xp} XP`;
   if (lootItem) msg += ` / loot: ${ITEMS[lootItem].name}`;
+  if (salvageItem) msg += ` / salvage: ${ITEMS[salvageItem].name}`;
   if (leveledUp) msg += ` / LEVEL UP! (+${leveledUp})`;
   logAction(c.id, 'job', msg, 1);
-  return { cash, xp, lootItem, leveledUp };
+  return { cash, xp, lootItem, salvageItem, leveledUp };
 }
 
 function getJobMastery(charId) {
@@ -539,6 +545,58 @@ function favorRefill(c, which) {
          c.energy_ts, c.stamina_ts, c.health_ts, c.id);
 }
 
+// ---------- CRAFTING ----------
+const { RECIPES } = require('./data');
+
+function inventoryMap(charId) {
+  const rows = db.prepare('SELECT item_id, quantity FROM inventory WHERE character_id = ?').all(charId);
+  const map = {};
+  for (const r of rows) map[r.item_id] = r.quantity;
+  return map;
+}
+
+function canCraft(charId, recipeId) {
+  const recipe = RECIPES.find(r => r.id === recipeId);
+  if (!recipe) return { ok: false, reason: 'unknown recipe' };
+  const have = inventoryMap(charId);
+  for (const [itemId, qty] of Object.entries(recipe.inputs)) {
+    if ((have[itemId] || 0) < qty) return { ok: false, reason: `need ${qty} ${ITEMS[itemId]?.name || itemId}` };
+  }
+  return { ok: true };
+}
+
+function craftRecipe(c, recipeId) {
+  const recipe = RECIPES.find(r => r.id === recipeId);
+  if (!recipe) throw new Error('unknown recipe');
+  const check = canCraft(c.id, recipeId);
+  if (!check.ok) throw new Error(check.reason);
+  // consume inputs
+  for (const [itemId, qty] of Object.entries(recipe.inputs)) {
+    if (!removeItem(c.id, itemId, qty)) throw new Error('inventory error');
+  }
+  // produce output
+  addItem(c.id, recipe.output.item, recipe.output.qty);
+  logAction(c.id, 'craft', `Crafted ${ITEMS[recipe.output.item].name}`, 1);
+  return { item: recipe.output.item, name: ITEMS[recipe.output.item].name };
+}
+
+function listRecipes(charId, includeHidden = false) {
+  const have = inventoryMap(charId);
+  return RECIPES
+    .filter(r => includeHidden || !r.hidden)
+    .map(r => {
+      const inputs = Object.entries(r.inputs).map(([id, qty]) => ({
+        item_id: id,
+        name: ITEMS[id]?.name || id,
+        qty,
+        owned: have[id] || 0,
+      }));
+      const outputItem = ITEMS[r.output.item];
+      const canDo = inputs.every(i => i.owned >= i.qty);
+      return { ...r, inputs, outputItem, canDo };
+    });
+}
+
 // ---------- SHOP ----------
 function buyItem(c, itemId, qty = 1) {
   const item = ITEMS[itemId];
@@ -602,5 +660,6 @@ module.exports = {
   postChat, getChat,
   logAction, getActionLog,
   mobCap, mobCount, getMob, hireGun, fireMobster, activeMobSize,
+  craftRecipe, listRecipes, canCraft,
   seedNpcsIfEmpty,
 };

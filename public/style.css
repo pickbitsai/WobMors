@@ -144,6 +144,17 @@ input[type=text], input[type=number], input[type=password], input[name] {
 .loadout { list-style: none; padding: 0; }
 .loadout li { padding: 0.3em 0; border-bottom: 1px dashed var(--edge); }
 
+/* Workshop */
+.recipe { padding: 0.8em 1em; }
+.recipe-head h3 { margin: 0; }
+.recipe-head .result { color: var(--accent); }
+.recipe-inputs { list-style: none; padding: 0; margin: 0.4em 0 0.8em; }
+.recipe-inputs li { padding: 0.2em 0; font-family: monospace; font-size: 0.9em; }
+.recipe-inputs li.ok { color: #bce1a8; }
+.recipe-inputs li.missing { color: #f0a0a0; }
+.recipe-inputs .owned { color: var(--muted); margin-left: 0.5em; }
+.recipe.cannot { opacity: 0.7; }
+
 /* Action log */
 .action-log {
   position: fixed; right: 1em; top: 7em; width: 22em; max-height: 70vh;

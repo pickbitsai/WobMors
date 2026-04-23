@@ -1,0 +1,32 @@
+<%- include('partials/head', { title: 'Workshop' }) %>
+<%- include('partials/hud') %>
+<main>
+  <h1>Workshop</h1>
+  <p class="muted">
+    Combine jobs drops and loot items into stronger gear. Components come from job salvage
+    (no cash cost, no market). Some <strong>hidden blueprints</strong> aren't listed below —
+    they must be discovered and shared in World Chat.
+  </p>
+
+  <% for (const r of recipes) { %>
+    <section class="card recipe <%= r.canDo ? 'can' : 'cannot' %>">
+      <div class="recipe-head">
+        <h3><%= r.name %> → <span class="result"><%= r.outputItem.name %></span>
+          <span class="muted">(+<%= r.outputItem.atk %>/<%= r.outputItem.def %> <%= r.outputItem.slot %>)</span>
+        </h3>
+      </div>
+      <ul class="recipe-inputs">
+        <% for (const inp of r.inputs) { %>
+          <li class="<%= inp.owned >= inp.qty ? 'ok' : 'missing' %>">
+            <%= inp.qty %> × <%= inp.name %> <span class="owned">(you have <%= inp.owned %>)</span>
+          </li>
+        <% } %>
+      </ul>
+      <form method="post" action="/workshop/craft/<%= r.id %>">
+        <button <%= r.canDo ? '' : 'disabled' %>>Craft</button>
+      </form>
+    </section>
+  <% } %>
+</main>
+<%- include('partials/action_log') %>
+<%- include('partials/foot') %>

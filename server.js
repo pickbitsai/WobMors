@@ -242,6 +242,19 @@ app.post('/refill/:which', loadChar, (req, res) => {
   res.redirect(req.get('Referer') || '/hub');
 });
 
+// --- workshop / crafting
+app.get('/workshop', loadChar, (req, res) => {
+  const recipes = game.listRecipes(req.char.id, false);
+  res.render('workshop', { recipes, actionLog: game.getActionLog(req.char.id) });
+});
+app.post('/workshop/craft/:id', loadChar, (req, res) => {
+  try {
+    const r = game.craftRecipe(req.char, req.params.id);
+    flash(req, `Crafted ${r.name}`, 'good');
+  } catch (e) { flash(req, e.message, 'err'); }
+  res.redirect('/workshop');
+});
+
 // --- mob
 app.get('/mob', loadChar, (req, res) => {
   const c = req.char;
