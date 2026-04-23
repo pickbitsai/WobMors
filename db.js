@@ -17,6 +17,7 @@ CREATE TABLE IF NOT EXISTS users (
   id            INTEGER PRIMARY KEY AUTOINCREMENT,
   username      TEXT UNIQUE NOT NULL,
   password_hash TEXT NOT NULL,
+  is_guest      INTEGER NOT NULL DEFAULT 0,
   created_at    INTEGER NOT NULL
 );
 
@@ -150,5 +151,9 @@ CREATE TABLE IF NOT EXISTS action_log (
 );
 CREATE INDEX IF NOT EXISTS idx_log_char ON action_log(character_id, id);
 `);
+
+// Best-effort migration for pre-existing DBs that were created before is_guest existed.
+// If the column is already there, SQLite throws — caught & swallowed.
+try { db.exec('ALTER TABLE users ADD COLUMN is_guest INTEGER NOT NULL DEFAULT 0'); } catch (_) {}
 
 module.exports = db;

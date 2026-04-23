@@ -3,11 +3,11 @@
   <h1>WOBMORS</h1>
   <p class="tag">a 2000s-style mafia grinder</p>
   <form method="post" action="/login">
-    <label>Username<input name="username" required></label>
-    <label>Password<input name="password" type="password" required></label>
+    <label>Username<input name="username" required autocomplete="username"></label>
+    <label>Password<input name="password" type="password" required autocomplete="current-password"></label>
     <button>Log In</button>
   </form>
   <% if (err) { %><p class="err"><%= err %></p><% } %>
-  <p class="alt">No account? <a href="/register">Register</a></p>
+  <p class="alt">First time? <a href="/">Just start playing</a> — a guest character is waiting.</p>
 </main>
 <%- include('partials/foot') %>

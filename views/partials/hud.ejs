@@ -28,6 +28,14 @@
   <a href="/workshop">Workshop</a>
   <a href="/shop">Shop</a>
   <a href="/chat">Chat</a>
+  <% if (typeof isGuest !== 'undefined' && isGuest) { %>
+    <a href="/claim" class="claim-link" title="Set a username + password so you can log in elsewhere">Claim</a>
+  <% } %>
+  <form action="/theme/<%= (typeof theme !== 'undefined' && theme === 'cyber') ? 'mafia' : 'cyber' %>" method="post" class="theme-switch">
+    <button title="Toggle between mafia and cyberpunk skin">
+      <%= (typeof theme !== 'undefined' && theme === 'cyber') ? '◐ mafia' : '◑ cyber' %>
+    </button>
+  </form>
   <form action="/logout" method="post" class="logout"><button>Logout</button></form>
 </nav>
 <% if (flash) { %><div class="flash <%= flash.kind %>"><%= flash.text %></div><% } %>

@@ -23,12 +23,21 @@ app.use(cookieSession({
   secure: process.env.VERCEL ? true : false,
 }));
 
-// ---------- flash helper ----------
+// ---------- flash + theme ----------
 // cookie-session session object is `null` until first write, so guard writes.
 app.use((req, res, next) => {
   res.locals.flash = (req.session && req.session.flash) || null;
   if (req.session) req.session.flash = null;
+  res.locals.theme = (req.session && req.session.theme) || 'mafia';
   next();
+});
+
+// Toggle or set theme. Body renders `body.theme-<name>`.
+app.post('/theme/:name', (req, res) => {
+  const name = req.params.name === 'cyber' ? 'cyber' : 'mafia';
+  if (!req.session) req.session = {};
+  req.session.theme = name;
+  res.redirect(req.get('Referer') || '/');
 });
 function flash(req, text, kind = 'info') {
   if (!req.session) req.session = {};
@@ -36,75 +45,64 @@ function flash(req, text, kind = 'info') {
 }
 
 // ---------- auth middleware ----------
+// Guest-first: every visitor gets a character immediately. Optional /claim
+// step upgrades the guest to a real username+password for cross-device access.
 function loadChar(req, res, next) {
-  if (!req.session.userId) return res.redirect('/login');
+  if (!req.session || !req.session.userId) {
+    const guest = game.createGuest();
+    req.session = req.session || {};
+    req.session.userId = guest.user_id;
+    req.char = guest;
+    res.locals.char = guest;
+    res.locals.isGuest = true;
+    res.locals.xpForLevel = data.xpForLevel;
+    return next();
+  }
   const c = game.getCharacterByUser(req.session.userId);
-  if (!c) return res.redirect('/create-character');
-  // persist regen state
+  if (!c) {
+    // Session refers to a user whose character was wiped (cold start on Vercel). Reset.
+    req.session = null;
+    return res.redirect('/');
+  }
   game.saveVitals(c);
   req.char = c;
   res.locals.char = c;
+  res.locals.isGuest = game.isGuestUser(req.session.userId);
   res.locals.xpForLevel = data.xpForLevel;
   next();
 }
 
-function guest(req, res, next) {
-  if (req.session.userId) return res.redirect('/');
-  next();
-}
-
 // ---------- ROUTES ----------
-app.get('/', (req, res) => {
-  if (!req.session.userId) return res.redirect('/login');
-  res.redirect('/hub');
-});
+app.get('/', (req, res) => res.redirect('/hub'));
 
-// --- auth
-app.get('/register', guest, (req, res) => res.render('register', { err: null }));
-app.post('/register', guest, (req, res) => {
-  const { username, password } = req.body;
-  if (!username || !password || username.length < 3 || password.length < 4)
-    return res.render('register', { err: 'username >=3 chars, password >=4 chars' });
-  try {
-    const hash = bcrypt.hashSync(password, 10);
-    const r = db.prepare('INSERT INTO users (username, password_hash, created_at) VALUES (?, ?, ?)')
-      .run(username, hash, game.now());
-    req.session.userId = r.lastInsertRowid;
-    return res.redirect('/create-character');
-  } catch (e) {
-    return res.render('register', { err: 'username taken' });
-  }
+// --- login (only useful for users who've claimed their account)
+app.get('/login', (req, res) => {
+  if (req.session && req.session.userId) return res.redirect('/');
+  res.render('login', { err: null });
 });
-
-app.get('/login', guest, (req, res) => res.render('login', { err: null }));
-app.post('/login', guest, (req, res) => {
+app.post('/login', (req, res) => {
   const { username, password } = req.body;
-  const u = db.prepare('SELECT * FROM users WHERE username = ?').get(username || '');
+  const u = db.prepare('SELECT * FROM users WHERE username = ? AND is_guest = 0').get(username || '');
   if (!u || !bcrypt.compareSync(password || '', u.password_hash))
     return res.render('login', { err: 'invalid credentials' });
-  req.session.userId = u.id;
+  req.session = { userId: u.id };
   res.redirect('/');
 });
 
 app.post('/logout', (req, res) => { req.session = null; res.redirect('/login'); });
 
-app.get('/create-character', (req, res) => {
-  if (!req.session.userId) return res.redirect('/login');
-  const existing = game.getCharacterByUser(req.session.userId);
-  if (existing) return res.redirect('/');
-  res.render('create_character', { err: null });
+// --- claim a guest account (set username + password so you can log in elsewhere)
+app.get('/claim', loadChar, (req, res) => {
+  if (!res.locals.isGuest) return res.redirect('/hub');
+  res.render('claim', { err: null });
 });
-app.post('/create-character', (req, res) => {
-  if (!req.session.userId) return res.redirect('/login');
-  const existing = game.getCharacterByUser(req.session.userId);
-  if (existing) return res.redirect('/');
-  const name = (req.body.name || '').trim();
-  if (name.length < 3 || name.length > 24)
-    return res.render('create_character', { err: 'name must be 3-24 chars' });
+app.post('/claim', loadChar, (req, res) => {
+  if (!res.locals.isGuest) return res.redirect('/hub');
   try {
-    game.createCharacter({ userId: req.session.userId, name });
+    game.claimGuest(req.session.userId, (req.body.username || '').trim(), req.body.password || '');
+    flash(req, 'Account claimed — you can now log in from any device', 'good');
   } catch (e) {
-    return res.render('create_character', { err: 'name taken' });
+    return res.render('claim', { err: e.message });
   }
   res.redirect('/hub');
 });

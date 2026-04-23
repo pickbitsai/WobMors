@@ -3,6 +3,7 @@ const {
   ITEMS, JOBS, PROPERTIES, REGEN, SKILL_COST, SKILL_POINTS_PER_LEVEL,
   INCOME_CAP_HOURS, xpForLevel, NPC_NAMES, MOB, HIRED_GUN_NAMES,
   CITIES, CITY_MASTERY_THRESHOLD, AMBUSH, ACHIEVEMENTS,
+  GUEST_ADJECTIVES, GUEST_NOUNS,
 } = require('./data');
 
 const now = () => Math.floor(Date.now() / 1000);
@@ -742,6 +743,60 @@ function getChat(limit = 40) {
   return rows.reverse();
 }
 
+// ---------- GUEST CREATION ----------
+function randomGuestName() {
+  const adj = GUEST_ADJECTIVES[Math.floor(Math.random() * GUEST_ADJECTIVES.length)];
+  const noun = GUEST_NOUNS[Math.floor(Math.random() * GUEST_NOUNS.length)];
+  // Collision-suffix so we don't collide on the unique character name
+  for (let i = 0; i < 5; i++) {
+    const suffix = Math.floor(Math.random() * 10000);
+    const candidate = `${adj} ${noun} #${suffix}`;
+    const exists = db.prepare('SELECT 1 FROM characters WHERE name = ?').get(candidate);
+    if (!exists) return candidate;
+  }
+  return `Guest ${Math.floor(Math.random() * 1e9).toString(36)}`;
+}
+
+function createGuest() {
+  // Random placeholder user row. Password hash is a throwaway random value;
+  // the guest can later /claim to set a real username+password.
+  let userId;
+  for (let i = 0; i < 5; i++) {
+    const username = 'guest_' + Math.random().toString(36).slice(2, 10);
+    try {
+      const r = db.prepare('INSERT INTO users (username, password_hash, is_guest, created_at) VALUES (?, ?, 1, ?)')
+        .run(username, Math.random().toString(36), now());
+      userId = r.lastInsertRowid;
+      break;
+    } catch (_) { /* collision, retry */ }
+  }
+  if (!userId) throw new Error('could not create guest user');
+  const name = randomGuestName();
+  const c = createCharacter({ userId, name });
+  return c;
+}
+
+function isGuestUser(userId) {
+  const u = db.prepare('SELECT is_guest FROM users WHERE id = ?').get(userId);
+  return !!(u && u.is_guest);
+}
+
+// Upgrade a guest into a claimed user by setting a real username+password.
+function claimGuest(userId, username, password) {
+  const u = db.prepare('SELECT is_guest FROM users WHERE id = ?').get(userId);
+  if (!u) throw new Error('user not found');
+  if (!u.is_guest) throw new Error('account is already claimed');
+  if (!username || username.length < 3) throw new Error('username must be at least 3 chars');
+  if (!password || password.length < 4) throw new Error('password must be at least 4 chars');
+  const bcrypt = require('bcryptjs');
+  try {
+    db.prepare('UPDATE users SET username = ?, password_hash = ?, is_guest = 0 WHERE id = ?')
+      .run(username, bcrypt.hashSync(password, 10), userId);
+  } catch (e) {
+    throw new Error('username taken');
+  }
+}
+
 // ---------- SEED ----------
 function seedNpcsIfEmpty(minCount = 60) {
   const count = db.prepare('SELECT COUNT(*) AS n FROM characters WHERE is_npc = 1').get().n;
@@ -782,5 +837,6 @@ module.exports = {
   earnedCityPassives, cityPassiveModifier,
   setAmbush, getLiveAmbushes,
   evaluateAchievements, getAchievements,
+  createGuest, isGuestUser, claimGuest,
   seedNpcsIfEmpty,
 };

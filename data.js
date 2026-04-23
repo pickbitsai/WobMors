@@ -203,6 +203,20 @@ const ACHIEVEMENTS = [
   { id: 'millionaire',      name: 'Made a Million',    desc: 'Hold $1,000,000',                    rule: c => c.cash >= 1000000,   reward: { favor_points: 3 } },
 ];
 
+// ---------- GUEST NAME POOL ----------
+// Random gangster nickname assembled on first visit. Used so the default
+// character has a personality without a name-entry screen.
+const GUEST_ADJECTIVES = [
+  'Quiet', 'Slick', 'Fat', 'Skinny', 'Lucky', 'Mad', 'Crazy', 'Silent', 'Blind',
+  'One-Eye', 'Cool', 'Fast', 'Sneaky', 'Cold', 'Iron', 'Stone', 'Tiny', 'Big',
+  'Sharp', 'Tough', 'Sly', 'Bad', 'Quick', 'Wild', 'Frosty', 'Red', 'Black', 'Gray',
+];
+const GUEST_NOUNS = [
+  'Tony', 'Vinny', 'Frankie', 'Sal', 'Paulie', 'Johnny', 'Louie', 'Mikey',
+  'Rocco', 'Angelo', 'Benny', 'Nick', 'Carlo', 'Joey', 'Tommy', 'Ralphie',
+  'Dom', 'Sonny', 'Bruno', 'Gino', 'Marco', 'Lorenzo', 'Vito', 'Silvio',
+];
+
 const HIRED_GUN_NAMES = [
   'Little Nicky', 'Three-Finger Louie', 'Fat Tony', 'Bugsy', 'Ricky the Rat',
   'Ace of Spades', 'Benny the Book', 'Uncle Junior', 'Dominic the Dragon', 'Mario the Mechanic',
@@ -247,5 +261,5 @@ module.exports = {
   ITEMS, JOBS, PROPERTIES, RECIPES, CITIES, CITY_MASTERY_THRESHOLD,
   NPC_NAMES, REGEN, SKILL_COST, SKILL_POINTS_PER_LEVEL,
   INCOME_CAP_HOURS, xpForLevel, MOB, HIRED_GUN_NAMES,
-  AMBUSH, ACHIEVEMENTS,
+  AMBUSH, ACHIEVEMENTS, GUEST_ADJECTIVES, GUEST_NOUNS,
 };
