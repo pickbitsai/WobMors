@@ -22,6 +22,14 @@
       <li><span>Jobs completed</span><strong><%= char.jobs_done %></strong></li>
       <li><span>Gamer Points</span><strong><%= char.gamer_points %></strong></li>
     </ul>
+    <% if (earnedPassives && earnedPassives.length) { %>
+      <h3 style="margin-top:1em">City passives ★</h3>
+      <ul class="kv">
+        <% for (const p of earnedPassives) { %>
+          <li><span><%= p.name %></span><strong><%= p.passive.description %></strong></li>
+        <% } %>
+      </ul>
+    <% } %>
     <h3 style="margin-top:1em">Favor Point refills</h3>
     <div class="row">
       <form method="post" action="/refill/energy"><button <%= char.favor_points < 1 ? 'disabled' : '' %>>Refill Energy (1 FP)</button></form>

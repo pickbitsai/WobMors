@@ -128,6 +128,21 @@ input[type=text], input[type=number], input[type=password], input[name] {
 .kv li { display: flex; justify-content: space-between; padding: 0.3em 0; border-bottom: 1px solid var(--edge); }
 .kv li:last-child { border-bottom: none; }
 
+/* City tabs */
+.city-tabs {
+  display: flex; gap: 0.3em; margin: 0.8em 0 1em;
+  border-bottom: 2px solid var(--edge);
+}
+.city-tab {
+  padding: 0.5em 1em; background: var(--card); border: 1px solid var(--edge); border-bottom: none;
+  border-radius: 3px 3px 0 0;
+  color: var(--muted); font-variant: small-caps; letter-spacing: 0.08em;
+}
+.city-tab:hover { color: var(--ink); text-decoration: none; }
+.city-tab.active { color: var(--accent); border-color: var(--accent); border-bottom: 2px solid var(--bg); margin-bottom: -2px; }
+.city-tab.locked { opacity: 0.5; }
+.city-tab .mastered { color: var(--accent); font-size: 0.85em; margin-left: 0.3em; }
+
 /* Jobs */
 .tier { margin-top: 1.5em; color: var(--accent); font-variant: small-caps; letter-spacing: 0.1em; border-bottom: 1px solid var(--edge); padding-bottom: 0.2em; }
 .job {

@@ -83,35 +83,62 @@ const RECIPES = [
   },
 ];
 
+// ---------- CITIES ----------
+// Each job belongs to one city. Mastering a city unlocks the next one.
+// Mastery passives fire once the player hits the completion threshold on the
+// final tier of that city.
+const CITIES = [
+  { id: 'nyc',     name: 'New York City', unlock_level: 1,
+    passive: { kind: 'property_discount', value: 0.05, description: '5% discount on property purchases' } },
+  { id: 'chicago', name: 'Chicago',       unlock_level: 20,
+    passive: { kind: 'income_bonus',      value: 0.05, description: '+5% property income' } },
+  { id: 'vegas',   name: 'Las Vegas',     unlock_level: 40,
+    passive: { kind: 'fight_xp',          value: 0.10, description: '+10% XP from fights' } },
+];
+
+const CITY_MASTERY_THRESHOLD = 25; // completions of each of a city's tier-5 jobs to earn passive
+
 // ---------- JOBS ----------
-// tier: progression gate. Higher tier requires mastery of the previous tier.
-// energy_cost, payout (cash), xp, mastery_required_for_next, loot (chance + item_id),
-// unlock_level: minimum player level.
+// city: which city the job belongs to.
+// tier: progression gate within the city.
+// mastery_required_for_next is implicit — we only gate on unlock_level here.
 const JOBS = [
+  // ===== NEW YORK CITY =====
   // Tier 1 - street
-  { id: 'mug_tourist',     name: 'Mug a Tourist',         tier: 1, unlock_level: 1,  energy: 2, cash: [25, 80],     xp: 3,  loot: { chance: 0.1,  item: 'brass_knuckles' }, salvage: { chance: 0.15, item: 'scrap_metal' } },
-  { id: 'pickpocket',      name: 'Pickpocket the Market', tier: 1, unlock_level: 1,  energy: 3, cash: [60, 140],    xp: 4,  loot: null,                                     salvage: { chance: 0.15, item: 'scrap_metal' } },
-  { id: 'shakedown',       name: 'Shake Down a Shopkeeper', tier: 1, unlock_level: 2, energy: 4, cash: [120, 250],   xp: 6,  loot: { chance: 0.08, item: 'switchblade' },  salvage: { chance: 0.1,  item: 'gunpowder' } },
-
+  { id: 'mug_tourist',     name: 'Mug a Tourist',         city: 'nyc', tier: 1, unlock_level: 1,  energy: 2, cash: [25, 80],     xp: 3,  loot: { chance: 0.1,  item: 'brass_knuckles' }, salvage: { chance: 0.15, item: 'scrap_metal' } },
+  { id: 'pickpocket',      name: 'Pickpocket the Market', city: 'nyc', tier: 1, unlock_level: 1,  energy: 3, cash: [60, 140],    xp: 4,  loot: null,                                     salvage: { chance: 0.15, item: 'scrap_metal' } },
+  { id: 'shakedown',       name: 'Shake Down a Shopkeeper', city: 'nyc', tier: 1, unlock_level: 2, energy: 4, cash: [120, 250],   xp: 6,  loot: { chance: 0.08, item: 'switchblade' },  salvage: { chance: 0.1,  item: 'gunpowder' } },
   // Tier 2 - neighborhood
-  { id: 'numbers_racket',  name: 'Run a Numbers Racket',  tier: 2, unlock_level: 4,  energy: 6,  cash: [400, 750],    xp: 11, loot: { chance: 0.1,  item: 'leather_jacket' }, salvage: { chance: 0.2, item: 'armor_plate' } },
-  { id: 'rig_horse_race',  name: 'Rig a Horse Race',      tier: 2, unlock_level: 6,  energy: 8,  cash: [800, 1500],   xp: 16, loot: { chance: 0.07, item: 'beater_sedan' },   salvage: { chance: 0.2, item: 'engine_block' } },
-  { id: 'jack_truck',      name: 'Jack a Delivery Truck', tier: 2, unlock_level: 8,  energy: 10, cash: [1600, 3200],  xp: 22, loot: { chance: 0.1,  item: 'saturday_special' }, salvage: { chance: 0.2, item: 'gunpowder' } },
-
+  { id: 'numbers_racket',  name: 'Run a Numbers Racket',  city: 'nyc', tier: 2, unlock_level: 4,  energy: 6,  cash: [400, 750],    xp: 11, loot: { chance: 0.1,  item: 'leather_jacket' }, salvage: { chance: 0.2, item: 'armor_plate' } },
+  { id: 'rig_horse_race',  name: 'Rig a Horse Race',      city: 'nyc', tier: 2, unlock_level: 6,  energy: 8,  cash: [800, 1500],   xp: 16, loot: { chance: 0.07, item: 'beater_sedan' },   salvage: { chance: 0.2, item: 'engine_block' } },
+  { id: 'jack_truck',      name: 'Jack a Delivery Truck', city: 'nyc', tier: 2, unlock_level: 8,  energy: 10, cash: [1600, 3200],  xp: 22, loot: { chance: 0.1,  item: 'saturday_special' }, salvage: { chance: 0.2, item: 'gunpowder' } },
   // Tier 3 - organized
-  { id: 'protection_run',  name: 'Run a Protection Racket', tier: 3, unlock_level: 12, energy: 14, cash: [5000, 9000],  xp: 38, loot: { chance: 0.1, item: 'bulletproof_vest' } },
-  { id: 'casino_skim',     name: 'Skim the Casino Count',  tier: 3, unlock_level: 15, energy: 18, cash: [9000, 18000], xp: 52, loot: { chance: 0.1, item: 'muscle_car' } },
-  { id: 'bank_job',        name: 'Pull a Bank Job',        tier: 3, unlock_level: 18, energy: 22, cash: [18000, 40000], xp: 72, loot: { chance: 0.1, item: 'tommy_gun' } },
-
+  { id: 'protection_run',  name: 'Run a Protection Racket', city: 'nyc', tier: 3, unlock_level: 12, energy: 14, cash: [5000, 9000],  xp: 38, loot: { chance: 0.1, item: 'bulletproof_vest' } },
+  { id: 'casino_skim',     name: 'Skim the Casino Count',  city: 'nyc', tier: 3, unlock_level: 15, energy: 18, cash: [9000, 18000], xp: 52, loot: { chance: 0.1, item: 'muscle_car' } },
+  { id: 'bank_job',        name: 'Pull a Bank Job',        city: 'nyc', tier: 3, unlock_level: 18, energy: 22, cash: [18000, 40000], xp: 72, loot: { chance: 0.1, item: 'tommy_gun' } },
   // Tier 4 - made
-  { id: 'hijack_armored',  name: 'Hijack an Armored Car',  tier: 4, unlock_level: 25, energy: 28, cash: [50000, 95000], xp: 120, loot: { chance: 0.1, item: 'kevlar_suit' } },
-  { id: 'smuggle_ring',    name: 'Run a Smuggling Ring',   tier: 4, unlock_level: 30, energy: 34, cash: [110000, 220000], xp: 180, loot: { chance: 0.1, item: 'black_cadillac' } },
-  { id: 'whack_rival',     name: 'Whack a Rival Capo',     tier: 4, unlock_level: 35, energy: 40, cash: [240000, 500000], xp: 280, loot: { chance: 0.1, item: 'sawed_off' } },
+  { id: 'hijack_armored',  name: 'Hijack an Armored Car',  city: 'nyc', tier: 4, unlock_level: 25, energy: 28, cash: [50000, 95000], xp: 120, loot: { chance: 0.1, item: 'kevlar_suit' } },
+  { id: 'smuggle_ring',    name: 'Run a Smuggling Ring',   city: 'nyc', tier: 4, unlock_level: 30, energy: 34, cash: [110000, 220000], xp: 180, loot: { chance: 0.1, item: 'black_cadillac' } },
+  { id: 'whack_rival',     name: 'Whack a Rival Capo',     city: 'nyc', tier: 4, unlock_level: 35, energy: 40, cash: [240000, 500000], xp: 280, loot: { chance: 0.1, item: 'sawed_off' } },
+  // Tier 5 - don (mastering these earns the city passive)
+  { id: 'take_syndicate',  name: 'Take Over a Syndicate',  city: 'nyc', tier: 5, unlock_level: 45, energy: 50, cash: [600000, 1200000], xp: 450, loot: { chance: 0.08, item: 'pinstripe_mail' } },
+  { id: 'heist_fed',       name: 'Heist the Federal Reserve', city: 'nyc', tier: 5, unlock_level: 55, energy: 65, cash: [1500000, 3000000], xp: 700, loot: { chance: 0.08, item: 'armored_limo' } },
+  { id: 'command_family',  name: 'Command the Five Families', city: 'nyc', tier: 5, unlock_level: 70, energy: 80, cash: [3500000, 7500000], xp: 1100, loot: { chance: 0.05, item: 'gold_plated_45' } },
 
-  // Tier 5 - don
-  { id: 'take_syndicate',  name: 'Take Over a Syndicate',  tier: 5, unlock_level: 45, energy: 50, cash: [600000, 1200000], xp: 450, loot: { chance: 0.08, item: 'pinstripe_mail' } },
-  { id: 'heist_fed',       name: 'Heist the Federal Reserve', tier: 5, unlock_level: 55, energy: 65, cash: [1500000, 3000000], xp: 700, loot: { chance: 0.08, item: 'armored_limo' } },
-  { id: 'command_family',  name: 'Command the Five Families', tier: 5, unlock_level: 70, energy: 80, cash: [3500000, 7500000], xp: 1100, loot: { chance: 0.05, item: 'gold_plated_45' } },
+  // ===== CHICAGO =====
+  { id: 'chi_speakeasy',   name: 'Run a Speakeasy',       city: 'chicago', tier: 1, unlock_level: 20, energy: 12, cash: [8000, 14000],    xp: 42, loot: { chance: 0.1, item: 'bulletproof_vest' } },
+  { id: 'chi_bribe_cops',  name: 'Bribe the Chicago PD',  city: 'chicago', tier: 1, unlock_level: 22, energy: 16, cash: [15000, 28000],   xp: 60, loot: null },
+  { id: 'chi_meatpacking', name: 'Run the Meat-Packing Racket', city: 'chicago', tier: 2, unlock_level: 25, energy: 20, cash: [35000, 60000], xp: 95, loot: { chance: 0.1, item: 'muscle_car' } },
+  { id: 'chi_union_bust',  name: 'Bust a Union',          city: 'chicago', tier: 3, unlock_level: 30, energy: 26, cash: [75000, 140000],  xp: 155, loot: { chance: 0.1, item: 'kevlar_suit' } },
+  { id: 'chi_hit_alderman', name: 'Whack a Crooked Alderman', city: 'chicago', tier: 4, unlock_level: 36, energy: 36, cash: [190000, 340000], xp: 240, loot: { chance: 0.08, item: 'black_cadillac' } },
+  { id: 'chi_own_precinct', name: 'Own an Entire Precinct', city: 'chicago', tier: 5, unlock_level: 44, energy: 48, cash: [500000, 900000], xp: 400, loot: { chance: 0.06, item: 'armored_limo' } },
+
+  // ===== LAS VEGAS =====
+  { id: 'vgs_pit_boss',    name: 'Pay Off a Pit Boss',    city: 'vegas', tier: 1, unlock_level: 40, energy: 30, cash: [250000, 500000], xp: 320, loot: { chance: 0.08, item: 'kevlar_suit' } },
+  { id: 'vgs_card_counter', name: 'Run a Counter Crew',   city: 'vegas', tier: 2, unlock_level: 45, energy: 42, cash: [600000, 1100000], xp: 500, loot: { chance: 0.08, item: 'pinstripe_mail' } },
+  { id: 'vgs_skim_whale',  name: 'Skim a Whale',          city: 'vegas', tier: 3, unlock_level: 52, energy: 58, cash: [1400000, 2800000], xp: 780, loot: { chance: 0.08, item: 'armored_limo' } },
+  { id: 'vgs_bury_desert', name: 'Bury Him in the Desert', city: 'vegas', tier: 4, unlock_level: 60, energy: 72, cash: [3000000, 5500000], xp: 1200, loot: { chance: 0.06, item: 'sawed_off' } },
+  { id: 'vgs_own_strip',   name: 'Own the Strip',         city: 'vegas', tier: 5, unlock_level: 75, energy: 95, cash: [8000000, 16000000], xp: 2000, loot: { chance: 0.05, item: 'bulletproof_rolls' } },
 ];
 
 // ---------- PROPERTIES ----------
@@ -188,6 +215,7 @@ function xpForLevel(level) {
 }
 
 module.exports = {
-  ITEMS, JOBS, PROPERTIES, RECIPES, NPC_NAMES, REGEN, SKILL_COST, SKILL_POINTS_PER_LEVEL,
+  ITEMS, JOBS, PROPERTIES, RECIPES, CITIES, CITY_MASTERY_THRESHOLD,
+  NPC_NAMES, REGEN, SKILL_COST, SKILL_POINTS_PER_LEVEL,
   INCOME_CAP_HOURS, xpForLevel, MOB, HIRED_GUN_NAMES,
 };

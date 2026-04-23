@@ -114,7 +114,8 @@ app.get('/hub', loadChar, (req, res) => {
   const c = req.char;
   const nextXp = data.xpForLevel(c.level + 1);
   const curXp = data.xpForLevel(c.level);
-  res.render('hub', { nextXp, curXp });
+  const earnedPassives = game.earnedCityPassives(c.id);
+  res.render('hub', { nextXp, curXp, earnedPassives });
 });
 
 // --- skill allocation
@@ -130,8 +131,19 @@ app.post('/allocate', loadChar, (req, res) => {
 app.get('/jobs', loadChar, (req, res) => {
   const c = req.char;
   const mastery = game.getJobMastery(c.id);
-  const availableJobs = data.JOBS.map(j => ({ ...j, completions: mastery[j.id] || 0 }));
-  res.render('jobs', { jobs: availableJobs, actionLog: game.getActionLog(c.id) });
+  const currentCity = data.CITIES.find(ci => ci.id === req.query.city) || data.CITIES[0];
+  const availableJobs = data.JOBS
+    .filter(j => j.city === currentCity.id)
+    .map(j => ({ ...j, completions: mastery[j.id] || 0 }));
+  const earned = game.earnedCityPassives(c.id);
+  res.render('jobs', {
+    jobs: availableJobs,
+    cities: data.CITIES,
+    currentCity,
+    earnedPassives: earned,
+    masteryThreshold: data.CITY_MASTERY_THRESHOLD,
+    actionLog: game.getActionLog(c.id),
+  });
 });
 app.post('/jobs/:id', loadChar, (req, res) => {
   try {
@@ -216,8 +228,8 @@ app.get('/properties', loadChar, (req, res) => {
   const owned = game.getOwnedProperties(req.char.id);
   const ownedIds = new Set(owned.map(p => p.id));
   const buyable = data.PROPERTIES.filter(p => !ownedIds.has(p.id));
-  const ownedWithNext = owned.map(p => ({ ...p, upgrade_cost: game.propertyUpgradeCost(p, p.level) }));
-  const buyableWithCost = buyable.map(p => ({ ...p, upgrade_cost: game.propertyUpgradeCost(p, 0) }));
+  const ownedWithNext = owned.map(p => ({ ...p, upgrade_cost: game.propertyUpgradeCost(p, p.level, req.char.id) }));
+  const buyableWithCost = buyable.map(p => ({ ...p, upgrade_cost: game.propertyUpgradeCost(p, 0, req.char.id) }));
   res.render('properties', { owned: ownedWithNext, buyable: buyableWithCost, actionLog: game.getActionLog(req.char.id) });
 });
 app.post('/properties/buy/:id', loadChar, (req, res) => {

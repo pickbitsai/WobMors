@@ -2,6 +2,7 @@ const db = require('./db');
 const {
   ITEMS, JOBS, PROPERTIES, REGEN, SKILL_COST, SKILL_POINTS_PER_LEVEL,
   INCOME_CAP_HOURS, xpForLevel, NPC_NAMES, MOB, HIRED_GUN_NAMES,
+  CITIES, CITY_MASTERY_THRESHOLD,
 } = require('./data');
 
 const now = () => Math.floor(Date.now() / 1000);
@@ -297,6 +298,29 @@ function getJobMastery(charId) {
   return map;
 }
 
+// ---------- CITY MASTERY PASSIVES ----------
+// A city's passive is earned once every tier-5 job in that city has
+// >= CITY_MASTERY_THRESHOLD completions.
+function earnedCityPassives(charId) {
+  const mastery = getJobMastery(charId);
+  const earned = [];
+  for (const city of CITIES) {
+    const tier5 = JOBS.filter(j => j.city === city.id && j.tier === 5);
+    if (tier5.length === 0) continue;
+    const allMastered = tier5.every(j => (mastery[j.id] || 0) >= CITY_MASTERY_THRESHOLD);
+    if (allMastered) earned.push(city);
+  }
+  return earned;
+}
+
+function cityPassiveModifier(charId, kind) {
+  let total = 0;
+  for (const city of earnedCityPassives(charId)) {
+    if (city.passive.kind === kind) total += city.passive.value;
+  }
+  return total;
+}
+
 // ---------- FIGHTING ----------
 // Total fight strength = personal stat + item slot sum (top-N per slot, N = 1 + active mob) + flat per-mobster bonus.
 function fightStrength(c, mode = 'attack') {
@@ -338,6 +362,8 @@ function resolveFight(attacker, defender) {
     defender.cash -= cashStolen;
     attacker.cash += cashStolen;
     xp = 3 + Math.floor(defender.level * 0.8);
+    const xpBonus = cityPassiveModifier(attacker.id, 'fight_xp');
+    if (xpBonus > 0) xp = Math.floor(xp * (1 + xpBonus));
     attacker.xp += xp;
     attacker.wins += 1;
     defender.losses += 1;
@@ -461,21 +487,25 @@ function completeHit(hitId, hunterId) {
 }
 
 // ---------- PROPERTIES ----------
-function propertyIncomePerHour(prop, level) {
-  return prop.base_income * level;
+function propertyIncomePerHour(prop, level, charId = null) {
+  const base = prop.base_income * level;
+  if (charId === null) return base;
+  const bonus = cityPassiveModifier(charId, 'income_bonus');
+  return Math.floor(base * (1 + bonus));
 }
 
-function propertyUpgradeCost(prop, currentLevel) {
-  if (currentLevel === 0) return prop.base_cost;
-  // Going from L currentLevel to L currentLevel+1
-  return Math.floor(prop.base_cost * (currentLevel + 1) * 0.6);
+function propertyUpgradeCost(prop, currentLevel, charId = null) {
+  const raw = currentLevel === 0 ? prop.base_cost : Math.floor(prop.base_cost * (currentLevel + 1) * 0.6);
+  if (charId === null) return raw;
+  const discount = cityPassiveModifier(charId, 'property_discount');
+  return Math.floor(raw * (1 - discount));
 }
 
 function getOwnedProperties(charId) {
   const rows = db.prepare('SELECT * FROM properties WHERE character_id = ?').all(charId);
   return rows.map(r => {
     const def = PROPERTIES.find(p => p.id === r.property_id);
-    const perHour = propertyIncomePerHour(def, r.level);
+    const perHour = propertyIncomePerHour(def, r.level, charId);
     const elapsedHours = (now() - r.last_collect_ts) / 3600;
     const capped = Math.min(INCOME_CAP_HOURS, elapsedHours);
     const currentUncollected = r.uncollected + Math.floor(perHour * capped);
@@ -492,7 +522,7 @@ function buyOrUpgradeProperty(c, propertyId) {
   if (c.level < def.unlock_level) throw new Error('level too low');
   const row = db.prepare('SELECT * FROM properties WHERE character_id = ? AND property_id = ?').get(c.id, propertyId);
   const currentLevel = row ? row.level : 0;
-  const cost = propertyUpgradeCost(def, currentLevel);
+  const cost = propertyUpgradeCost(def, currentLevel, c.id);
   if (c.cash < cost) throw new Error('not enough cash');
   c.cash -= cost;
   db.prepare('UPDATE characters SET cash = ? WHERE id = ?').run(c.cash, c.id);
@@ -661,5 +691,6 @@ module.exports = {
   logAction, getActionLog,
   mobCap, mobCount, getMob, hireGun, fireMobster, activeMobSize,
   craftRecipe, listRecipes, canCraft,
+  earnedCityPassives, cityPassiveModifier,
   seedNpcsIfEmpty,
 };
