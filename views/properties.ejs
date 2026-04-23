@@ -1,0 +1,51 @@
+<%- include('partials/head', { title: 'Properties' }) %>
+<%- include('partials/hud') %>
+<main>
+  <h1>Your City</h1>
+  <form method="post" action="/properties/collect"><button>Collect All</button></form>
+  <section class="card">
+    <h2>Owned</h2>
+    <% if (owned.length === 0) { %><p class="muted">You own no properties. Buy some from below.</p><% } %>
+    <table class="itemlist">
+      <thead><tr><th>Property</th><th>Level</th><th>Income/hr</th><th>Uncollected</th><th>Cap</th><th>Upgrade</th></tr></thead>
+      <tbody>
+      <% for (const p of owned) { %>
+        <tr>
+          <td><%= p.name %></td>
+          <td>L<%= p.level %></td>
+          <td>$<%= p.per_hour.toLocaleString() %></td>
+          <td>$<%= p.uncollected.toLocaleString() %></td>
+          <td>$<%= p.cap.toLocaleString() %></td>
+          <td>
+            <form method="post" action="/properties/buy/<%= p.id %>" class="row">
+              <button <%= char.cash < p.upgrade_cost ? 'disabled' : '' %>>+1 Level · $<%= p.upgrade_cost.toLocaleString() %></button>
+            </form>
+          </td>
+        </tr>
+      <% } %>
+      </tbody>
+    </table>
+  </section>
+  <section class="card">
+    <h2>Buy new</h2>
+    <table class="itemlist">
+      <thead><tr><th>Property</th><th>Unlock</th><th>Base income/hr</th><th>Cost</th><th></th></tr></thead>
+      <tbody>
+      <% for (const p of buyable) { %>
+        <tr class="<%= char.level < p.unlock_level ? 'locked' : '' %>">
+          <td><%= p.name %></td>
+          <td>lvl <%= p.unlock_level %>+</td>
+          <td>$<%= p.base_income.toLocaleString() %></td>
+          <td>$<%= p.upgrade_cost.toLocaleString() %></td>
+          <td>
+            <form method="post" action="/properties/buy/<%= p.id %>">
+              <button <%= char.level < p.unlock_level || char.cash < p.upgrade_cost ? 'disabled' : '' %>>Buy</button>
+            </form>
+          </td>
+        </tr>
+      <% } %>
+      </tbody>
+    </table>
+  </section>
+</main>
+<%- include('partials/foot') %>

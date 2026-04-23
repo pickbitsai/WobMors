@@ -1,0 +1,21 @@
+<%- include('partials/head', { title: 'Fight' }) %>
+<%- include('partials/hud') %>
+<main>
+  <h1>Fight</h1>
+  <p class="muted">Targets within ±20% of your level. Each attack costs <strong>1 Stamina</strong>. You keep health even when you lose; death means full heal cost.</p>
+  <table class="itemlist">
+    <thead><tr><th>Name</th><th>Level</th><th>Record</th><th>Cash on hand</th><th></th></tr></thead>
+    <tbody>
+    <% for (const o of opponents) { %>
+      <tr>
+        <td><%= o.name %><% if (o.is_npc) { %> <span class="muted">(NPC)</span><% } %></td>
+        <td><%= o.level %></td>
+        <td><%= o.wins %>–<%= o.losses %></td>
+        <td>$<%= o.cash.toLocaleString() %></td>
+        <td><form method="post" action="/fight/<%= o.id %>"><button <%= char.stamina < 1 ? 'disabled' : '' %>>Attack</button></form></td>
+      </tr>
+    <% } %>
+    </tbody>
+  </table>
+</main>
+<%- include('partials/foot') %>

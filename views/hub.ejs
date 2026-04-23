@@ -1,0 +1,33 @@
+<%- include('partials/head', { title: 'Hub' }) %>
+<%- include('partials/hud') %>
+<main class="grid two">
+  <section class="card">
+    <h2>Character</h2>
+    <table class="stats">
+      <tr><th>Attack</th><td><%= char.attack %></td><td><form method="post" action="/allocate"><input type="hidden" name="stat" value="attack"><button <%= char.skill_points < 1 ? 'disabled' : '' %>>+1 (1 SP)</button></form></td></tr>
+      <tr><th>Defense</th><td><%= char.defense %></td><td><form method="post" action="/allocate"><input type="hidden" name="stat" value="defense"><button <%= char.skill_points < 1 ? 'disabled' : '' %>>+1 (1 SP)</button></form></td></tr>
+      <tr><th>Max Health</th><td><%= char.max_health %></td><td><form method="post" action="/allocate"><input type="hidden" name="stat" value="max_health"><button <%= char.skill_points < 1 ? 'disabled' : '' %>>+10 (1 SP)</button></form></td></tr>
+      <tr><th>Max Energy</th><td><%= char.max_energy %></td><td><form method="post" action="/allocate"><input type="hidden" name="stat" value="max_energy"><button <%= char.skill_points < 1 ? 'disabled' : '' %>>+1 (1 SP)</button></form></td></tr>
+      <tr><th>Max Stamina</th><td><%= char.max_stamina %></td><td><form method="post" action="/allocate"><input type="hidden" name="stat" value="max_stamina"><button <%= char.skill_points < 2 ? 'disabled' : '' %>>+1 (2 SP)</button></form></td></tr>
+    </table>
+    <p class="muted">Unspent skill points: <strong><%= char.skill_points %></strong></p>
+    <p class="muted">XP: <%= char.xp.toLocaleString() %> / <%= nextXp.toLocaleString() %> (next level)</p>
+  </section>
+
+  <section class="card">
+    <h2>Record</h2>
+    <ul class="kv">
+      <li><span>Wins</span><strong><%= char.wins %></strong></li>
+      <li><span>Losses</span><strong><%= char.losses %></strong></li>
+      <li><span>Jobs completed</span><strong><%= char.jobs_done %></strong></li>
+      <li><span>Gamer Points</span><strong><%= char.gamer_points %></strong></li>
+    </ul>
+    <h3 style="margin-top:1em">Favor Point refills</h3>
+    <div class="row">
+      <form method="post" action="/refill/energy"><button <%= char.favor_points < 1 ? 'disabled' : '' %>>Refill Energy (1 FP)</button></form>
+      <form method="post" action="/refill/stamina"><button <%= char.favor_points < 1 ? 'disabled' : '' %>>Refill Stamina (1 FP)</button></form>
+      <form method="post" action="/refill/health"><button <%= char.favor_points < 1 ? 'disabled' : '' %>>Refill Health (1 FP)</button></form>
+    </div>
+  </section>
+</main>
+<%- include('partials/foot') %>

@@ -1,0 +1,37 @@
+<%- include('partials/head', { title: 'Hitlist' }) %>
+<%- include('partials/hud') %>
+<main>
+  <h1>Hitlist</h1>
+  <p class="muted">Place a bounty on anyone; any hunter can collect it for +xp, +cash. Hunts cost <strong>2 Stamina</strong> and come with an attack bonus.</p>
+
+  <section class="card">
+    <h2>Place a hit</h2>
+    <form method="post" action="/hitlist/place" class="row">
+      <input type="number" name="target_id" placeholder="target id" required>
+      <input type="number" name="bounty" placeholder="bounty $ (min 1000)" min="1000" required>
+      <button>Place</button>
+    </form>
+    <p class="muted">Your open hits: <%= myActive %> · tip: find target ids on the Fight page.</p>
+  </section>
+
+  <section class="card">
+    <h2>Open hits</h2>
+    <% if (hits.length === 0) { %><p class="muted">No open hits. The streets are quiet.</p><% } %>
+    <table class="itemlist">
+      <thead><tr><th>Target</th><th>Lvl</th><th>HP</th><th>Placed by</th><th>Bounty</th><th></th></tr></thead>
+      <tbody>
+      <% for (const h of hits) { %>
+        <tr>
+          <td><%= h.target_name %> <span class="muted">#<%= h.target_id %></span></td>
+          <td><%= h.target_level %></td>
+          <td><%= h.target_health %></td>
+          <td><%= h.placer_name %></td>
+          <td>$<%= h.bounty.toLocaleString() %></td>
+          <td><form method="post" action="/hitlist/take/<%= h.id %>"><button <%= char.stamina < 2 ? 'disabled' : '' %>>Take</button></form></td>
+        </tr>
+      <% } %>
+      </tbody>
+    </table>
+  </section>
+</main>
+<%- include('partials/foot') %>

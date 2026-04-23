@@ -1,0 +1,26 @@
+<%- include('partials/head', { title: 'Shop' }) %>
+<%- include('partials/hud') %>
+<main>
+  <h1>Shop</h1>
+  <table class="itemlist">
+    <thead><tr><th>Item</th><th>Slot</th><th>Atk</th><th>Def</th><th>Cost</th><th></th></tr></thead>
+    <tbody>
+    <% for (const i of items) { %>
+      <tr>
+        <td><%= i.name %></td>
+        <td><%= i.slot %></td>
+        <td>+<%= i.atk %></td>
+        <td>+<%= i.def %></td>
+        <td>$<%= i.cost.toLocaleString() %></td>
+        <td>
+          <form method="post" action="/shop/buy/<%= i.id %>" class="row">
+            <input type="number" name="qty" value="1" min="1" max="10" style="width:4em">
+            <button <%= char.cash < i.cost ? 'disabled' : '' %>>Buy</button>
+          </form>
+        </td>
+      </tr>
+    <% } %>
+    </tbody>
+  </table>
+</main>
+<%- include('partials/foot') %>

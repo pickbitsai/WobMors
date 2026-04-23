@@ -1,0 +1,48 @@
+<%- include('partials/head', { title: 'Inventory' }) %>
+<%- include('partials/hud') %>
+<main>
+  <h1>Inventory</h1>
+  <section class="card">
+    <h2>Equipped loadouts</h2>
+    <div class="grid two">
+      <div>
+        <h3>Attack (offense prioritised)</h3>
+        <ul class="loadout">
+          <li>Weapon: <%= atk.weapon ? `${atk.weapon.name} (+${atk.weapon.atk}/+${atk.weapon.def})` : '—' %></li>
+          <li>Armor: <%= atk.armor ? `${atk.armor.name} (+${atk.armor.atk}/+${atk.armor.def})` : '—' %></li>
+          <li>Vehicle: <%= atk.vehicle ? `${atk.vehicle.name} (+${atk.vehicle.atk}/+${atk.vehicle.def})` : '—' %></li>
+        </ul>
+        <p>Bonus: <strong>+<%= totalsAtk.atk %></strong> atk / +<%= totalsAtk.def %> def</p>
+      </div>
+      <div>
+        <h3>Defense (defense prioritised)</h3>
+        <ul class="loadout">
+          <li>Weapon: <%= def.weapon ? `${def.weapon.name} (+${def.weapon.atk}/+${def.weapon.def})` : '—' %></li>
+          <li>Armor: <%= def.armor ? `${def.armor.name} (+${def.armor.atk}/+${def.armor.def})` : '—' %></li>
+          <li>Vehicle: <%= def.vehicle ? `${def.vehicle.name} (+${def.vehicle.atk}/+${def.vehicle.def})` : '—' %></li>
+        </ul>
+        <p>Bonus: +<%= totalsDef.atk %> atk / <strong>+<%= totalsDef.def %></strong> def</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>All items</h2>
+    <% if (inv.length === 0) { %><p class="muted">You own nothing. Do some jobs or visit the shop.</p><% } %>
+    <table class="itemlist">
+      <thead><tr><th>Item</th><th>Slot</th><th>Atk</th><th>Def</th><th>Qty</th></tr></thead>
+      <tbody>
+      <% for (const i of inv) { %>
+        <tr>
+          <td><%= i.name %></td>
+          <td><%= i.slot %></td>
+          <td>+<%= i.atk %></td>
+          <td>+<%= i.def %></td>
+          <td><%= i.quantity %></td>
+        </tr>
+      <% } %>
+      </tbody>
+    </table>
+  </section>
+</main>
+<%- include('partials/foot') %>

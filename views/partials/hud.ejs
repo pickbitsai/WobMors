@@ -1,0 +1,31 @@
+<% if (typeof char !== 'undefined' && char) {
+  const curXp = xpForLevel(char.level);
+  const nextXp = xpForLevel(char.level + 1);
+  const xpPct = Math.max(0, Math.min(100, ((char.xp - curXp) / Math.max(1, nextXp - curXp)) * 100));
+%>
+<header class="hud">
+  <div class="brand"><a href="/hub">WOBMORS</a></div>
+  <div class="vitals">
+    <span class="pill name"><%= char.name %></span>
+    <span class="pill lvl">LVL <%= char.level %></span>
+    <span class="pill">$<%= char.cash.toLocaleString() %></span>
+    <span class="pill fp">◆ <%= char.favor_points %> FP</span>
+    <span class="pill hp" title="Health">HP <%= char.health %>/<%= char.max_health %></span>
+    <span class="pill en" title="Energy">EN <%= char.energy %>/<%= char.max_energy %></span>
+    <span class="pill st" title="Stamina">ST <%= char.stamina %>/<%= char.max_stamina %></span>
+    <span class="pill" title="XP"><%= char.xp.toLocaleString() %> / <%= nextXp.toLocaleString() %></span>
+  </div>
+</header>
+<nav class="navbar">
+  <a href="/hub">Hub</a>
+  <a href="/jobs">Jobs</a>
+  <a href="/fight">Fight</a>
+  <a href="/hitlist">Hitlist</a>
+  <a href="/properties">Properties</a>
+  <a href="/inventory">Inventory</a>
+  <a href="/shop">Shop</a>
+  <a href="/chat">Chat</a>
+  <form action="/logout" method="post" class="logout"><button>Logout</button></form>
+</nav>
+<% if (flash) { %><div class="flash <%= flash.kind %>"><%= flash.text %></div><% } %>
+<% } %>

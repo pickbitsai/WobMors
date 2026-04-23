@@ -1,0 +1,16 @@
+<%- include('partials/head', { title: 'Chat' }) %>
+<%- include('partials/hud') %>
+<main>
+  <h1>World Chat</h1>
+  <section class="card chatlog">
+    <% if (messages.length === 0) { %><p class="muted">No messages yet. Be the first.</p><% } %>
+    <% for (const m of messages) { %>
+      <div class="msg"><span class="who"><%= m.name %></span><span class="text"><%= m.text %></span></div>
+    <% } %>
+  </section>
+  <form method="post" action="/chat" class="row">
+    <input name="text" maxlength="280" required placeholder="Say something…" style="flex:1">
+    <button>Post</button>
+  </form>
+</main>
+<%- include('partials/foot') %>

@@ -1,0 +1,110 @@
+const Database = require('better-sqlite3');
+const path = require('path');
+
+const db = new Database(path.join(__dirname, 'game.db'));
+db.pragma('journal_mode = WAL');
+db.pragma('foreign_keys = ON');
+
+db.exec(`
+CREATE TABLE IF NOT EXISTS users (
+  id            INTEGER PRIMARY KEY AUTOINCREMENT,
+  username      TEXT UNIQUE NOT NULL,
+  password_hash TEXT NOT NULL,
+  created_at    INTEGER NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS characters (
+  id             INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id        INTEGER UNIQUE REFERENCES users(id) ON DELETE CASCADE,
+  name           TEXT UNIQUE NOT NULL,
+  is_npc         INTEGER NOT NULL DEFAULT 0,
+  level          INTEGER NOT NULL DEFAULT 1,
+  xp             INTEGER NOT NULL DEFAULT 0,
+  skill_points   INTEGER NOT NULL DEFAULT 5,
+
+  max_health     INTEGER NOT NULL DEFAULT 100,
+  max_energy     INTEGER NOT NULL DEFAULT 20,
+  max_stamina    INTEGER NOT NULL DEFAULT 5,
+  attack         INTEGER NOT NULL DEFAULT 5,
+  defense        INTEGER NOT NULL DEFAULT 5,
+
+  health         INTEGER NOT NULL DEFAULT 100,
+  energy         INTEGER NOT NULL DEFAULT 20,
+  stamina        INTEGER NOT NULL DEFAULT 5,
+  health_ts      INTEGER NOT NULL,
+  energy_ts      INTEGER NOT NULL,
+  stamina_ts     INTEGER NOT NULL,
+
+  cash           INTEGER NOT NULL DEFAULT 500,
+  favor_points   INTEGER NOT NULL DEFAULT 5,
+  gamer_points   INTEGER NOT NULL DEFAULT 0,
+
+  wins           INTEGER NOT NULL DEFAULT 0,
+  losses         INTEGER NOT NULL DEFAULT 0,
+  jobs_done      INTEGER NOT NULL DEFAULT 0,
+
+  created_at     INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_characters_level ON characters(level);
+
+CREATE TABLE IF NOT EXISTS inventory (
+  id           INTEGER PRIMARY KEY AUTOINCREMENT,
+  character_id INTEGER NOT NULL REFERENCES characters(id) ON DELETE CASCADE,
+  item_id      TEXT NOT NULL,
+  quantity     INTEGER NOT NULL DEFAULT 1,
+  UNIQUE(character_id, item_id)
+);
+CREATE INDEX IF NOT EXISTS idx_inv_char ON inventory(character_id);
+
+CREATE TABLE IF NOT EXISTS job_mastery (
+  character_id INTEGER NOT NULL REFERENCES characters(id) ON DELETE CASCADE,
+  job_id       TEXT NOT NULL,
+  completions  INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY (character_id, job_id)
+);
+
+CREATE TABLE IF NOT EXISTS properties (
+  character_id     INTEGER NOT NULL REFERENCES characters(id) ON DELETE CASCADE,
+  property_id      TEXT NOT NULL,
+  level            INTEGER NOT NULL DEFAULT 1,
+  last_collect_ts  INTEGER NOT NULL,
+  uncollected      INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY (character_id, property_id)
+);
+
+CREATE TABLE IF NOT EXISTS hitlist (
+  id            INTEGER PRIMARY KEY AUTOINCREMENT,
+  target_id     INTEGER NOT NULL REFERENCES characters(id) ON DELETE CASCADE,
+  placer_id     INTEGER NOT NULL REFERENCES characters(id) ON DELETE CASCADE,
+  bounty        INTEGER NOT NULL,
+  created_at    INTEGER NOT NULL,
+  completed_by  INTEGER REFERENCES characters(id) ON DELETE SET NULL,
+  completed_at  INTEGER
+);
+CREATE INDEX IF NOT EXISTS idx_hit_open ON hitlist(target_id, completed_at);
+
+CREATE TABLE IF NOT EXISTS fight_log (
+  id            INTEGER PRIMARY KEY AUTOINCREMENT,
+  attacker_id   INTEGER NOT NULL,
+  defender_id   INTEGER NOT NULL,
+  winner_id     INTEGER NOT NULL,
+  cash_stolen   INTEGER NOT NULL DEFAULT 0,
+  damage_to_def INTEGER NOT NULL DEFAULT 0,
+  damage_to_atk INTEGER NOT NULL DEFAULT 0,
+  xp_gained     INTEGER NOT NULL DEFAULT 0,
+  kind          TEXT NOT NULL DEFAULT 'fight',
+  ts            INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_log_def ON fight_log(defender_id, ts);
+CREATE INDEX IF NOT EXISTS idx_log_atk ON fight_log(attacker_id, ts);
+
+CREATE TABLE IF NOT EXISTS chat_messages (
+  id           INTEGER PRIMARY KEY AUTOINCREMENT,
+  character_id INTEGER NOT NULL REFERENCES characters(id) ON DELETE CASCADE,
+  text         TEXT NOT NULL,
+  ts           INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_chat_ts ON chat_messages(ts);
+`);
+
+module.exports = db;

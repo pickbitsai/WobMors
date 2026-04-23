@@ -1,0 +1,23 @@
+<%- include('partials/head', { title: 'Jobs' }) %>
+<%- include('partials/hud') %>
+<main>
+  <h1>Jobs</h1>
+  <% let tier = 0; for (const j of jobs) { %>
+    <% if (j.tier !== tier) { tier = j.tier; %>
+      <h2 class="tier">Tier <%= tier %></h2>
+    <% } %>
+    <div class="job <%= char.level < j.unlock_level ? 'locked' : '' %>">
+      <div class="job-info">
+        <div class="job-name"><%= j.name %> <span class="muted">(lvl <%= j.unlock_level %>+)</span></div>
+        <div class="job-payout">Energy <strong><%= j.energy %></strong> · Cash $<%= j.cash[0].toLocaleString() %>–$<%= j.cash[1].toLocaleString() %> · XP <%= j.xp %></div>
+        <div class="job-mastery">Completions: <%= j.completions %></div>
+      </div>
+      <div class="job-action">
+        <form method="post" action="/jobs/<%= j.id %>">
+          <button <%= char.level < j.unlock_level || char.energy < j.energy ? 'disabled' : '' %>>Do Job</button>
+        </form>
+      </div>
+    </div>
+  <% } %>
+</main>
+<%- include('partials/foot') %>
