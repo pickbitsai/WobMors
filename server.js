@@ -355,15 +355,8 @@ app.get('/achievements', loadChar, (req, res) => {
   res.render('achievements', { achievements, earned, total: achievements.length });
 });
 
-// --- chat
-app.get('/chat', loadChar, (req, res) => {
-  const messages = game.getChat(50);
-  res.render('chat', { messages });
-});
-app.post('/chat', loadChar, (req, res) => {
-  game.postChat(req.char.id, req.body.text || '');
-  res.redirect('/chat');
-});
+// TODO(phase2): chat / social — routes removed; game.postChat / game.getChat and
+// the chat_messages schema are preserved for when real-time social is added.
 
 // ---------- boot ----------
 game.seedNpcsIfEmpty(60);
